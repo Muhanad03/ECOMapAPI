@@ -12,9 +12,22 @@
     if($_requestMethod == "GET"){
 
 
-        $treeList = getTreeList();
-        echo $treeList;
 
+        if(isset($_GET['id'])){
+
+            $tree = getTreeLocation($_GET);
+            echo $tree;
+
+
+
+        }else{
+
+            $treeList = getTreeList();
+            echo $treeList;
+    
+        }
+
+       
         
     }else{
 
