@@ -14,12 +14,12 @@ function getTreeList(){
 
         if(mysqli_num_rows($query_run)>0){
 
-            $respone = mysqli_fetch_all($query_run,MYSQLI_ASSOC);
+            $response = mysqli_fetch_all($query_run,MYSQLI_ASSOC);
             $data = [
     
                 'status' => 200,
                 'message' => 'Data fetched successfully',
-                'data' => $respone
+                'data' => $response
     
             ];
     
@@ -149,10 +149,9 @@ function getTreeLocation($GET){
         return error("Wrong data");
     }
     $id = $GET['id'];
-    $treeID = mysqli_real_escape_string($con,$id);
+    $id = mysqli_real_escape_string($con,$id);
 
     $query = "SELECT * FROM trees WHERE id = '$id' LIMIT 1";
-
     $result = mysqli_query($con,$query);
 
     if($result){
@@ -166,8 +165,6 @@ function getTreeLocation($GET){
                 'status' => 200,
                 'message' => "Tree was found",
                 'data' => $finalResult
-
-        
             ];
         
             header("HTTP/1.0 200 Ok");
@@ -203,5 +200,81 @@ function getTreeLocation($GET){
     }
 
 }
+
+
+function updateTree($treeData,$GET){
+
+    global $con;
+
+    if(!isset($GET['id'])){
+
+        return error("tree id not found");
+
+    }else{
+
+
+    }
+
+    $treeID = mysqli_real_escape_string($con,$GET['longitude']);
+    $longitude = mysqli_real_escape_string($con,$treeData['longitude']);
+    $latitude = mysqli_real_escape_string($con,$treeData['latitude']);
+
+    if(empty(trim($latitude)) ||empty(trim($longitude))){
+
+
+            return error('Check Data');
+
+    }else{
+
+
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+
+            return error('Latitude and longitude must be numeric');
+        }else{
+
+
+            $latitude = (double)$latitude;
+            $longitude = (double)$longitude;
+    
+            $query = "UPDATE trees (longitude,latitude) VALUES ('$longitude', '$latitude')";
+            $result = mysqli_query($con,$query);
+    
+            if($result){
+    
+                $data = [
+        
+                    'status' => 201,
+                    'message' => "Data stored successfully",
+            
+                ];
+            
+                header("HTTP/1.0 201 Data stored successfully");
+                return json_encode($data);
+                
+    
+            }else{
+    
+                $data = [
+        
+                    'status' => 500,
+                    'message' => "Internal API Error",
+            
+                ];
+            
+                header("HTTP/1.0 500 Internal API Error");
+                return json_encode($data);
+            }
+
+        }
+    
+        
+       
+    }
+
+
+    
+
+}
+
 
 ?>
