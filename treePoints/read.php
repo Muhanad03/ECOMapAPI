@@ -15,7 +15,7 @@
 
         if(isset($_GET['id'])){
 
-            $tree = getTreeLocation($_GET);
+            $tree = getTree($_GET);
             echo $tree;
 
         }else{

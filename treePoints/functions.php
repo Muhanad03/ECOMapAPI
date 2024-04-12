@@ -5,7 +5,7 @@ function getTreeList(){
 
     global $con;
 
-    $query = "SELECT * FROM trees";
+    $query = "SELECT * FROM tree_details";
 
     $query_run = mysqli_query($con,$query);
 
@@ -79,10 +79,17 @@ function storeTree($treeData){
 
     global $con;
 
-    $longitude = mysqli_real_escape_string($con,$treeData['longitude']);
-    $latitude = mysqli_real_escape_string($con,$treeData['latitude']);
+    $AddedByUser_ID = mysqli_real_escape_string($con,$treeData['AddedByUser_ID']);
+    $Longitude = mysqli_real_escape_string($con,$treeData['Longitude']);
+    $Latitude = mysqli_real_escape_string($con,$treeData['Latitude']);
+    $Height = mysqli_real_escape_string($con,$treeData['Height']);
+    $Circumference = mysqli_real_escape_string($con,$treeData['Circumference']);
+    $Plant_Age = mysqli_real_escape_string($con,$treeData['Plant_Age']);
+    $Planter_Name = mysqli_real_escape_string($con,$treeData['Planter_Name']);
+            
 
-    if(empty(trim($latitude)) ||empty(trim($longitude))){
+    if(empty(trim($Latitude)) ||empty(trim($Longitude))||empty(trim($AddedByUser_ID))||empty(trim($Height))||empty(trim($Circumference))
+    ||empty(trim($Plant_Age))||empty(trim($Planter_Name))){
 
 
             return error('Check Data');
@@ -90,16 +97,21 @@ function storeTree($treeData){
     }else{
 
 
-        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+        if (!is_numeric($Latitude) || !is_numeric($Longitude)|| !is_numeric($Longitude)|| !is_numeric($Height)|| !is_numeric($Circumference)) {
 
-            return error('Latitude and longitude must be numeric');
+            return error('Wrong data type');
         }else{
 
 
-            $latitude = (double)$latitude;
-            $longitude = (double)$longitude;
-    
-            $query = "INSERT INTO trees (longitude,latitude) VALUES ('$longitude', '$latitude')";
+            $Latitude = (double)$Latitude;
+            $Longitude = (double)$Longitude;
+            $Height = (double)$Height;
+            $Circumference = (double)$Circumference;
+            $AddedByUser_ID = (int)$AddedByUser_ID;
+
+            $query = "INSERT INTO tree_details (Longitude,Latitude,Height,Circumference,AddedByUser_ID,Plant_Age,
+            Planter_Name) VALUES ('$Longitude', '$Latitude','$Height','$Circumference','$AddedByUser_ID',
+            '$Plant_Age','$Planter_Name')";
             $result = mysqli_query($con,$query);
     
             if($result){
@@ -140,7 +152,7 @@ function storeTree($treeData){
 }
 
 
-function getTreeLocation($GET){
+function getTree($GET){
 
     global $con;
 
@@ -151,7 +163,7 @@ function getTreeLocation($GET){
     $id = $GET['id'];
     $id = mysqli_real_escape_string($con,$id);
 
-    $query = "SELECT * FROM trees WHERE id = '$id' LIMIT 1";
+    $query = "SELECT * FROM tree_details WHERE Tree_ID = '$id' LIMIT 1";
     $result = mysqli_query($con,$query);
 
     if($result){
