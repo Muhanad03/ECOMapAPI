@@ -288,5 +288,74 @@ function updateTree($treeData,$GET){
 
 }
 
+function storeTreeImage($imageData) {
+    global $con;
+
+    $AddedByUser_ID = mysqli_real_escape_string($con, $imageData['AddedByUser_ID']);
+    $Tree_ID = mysqli_real_escape_string($con, $imageData['Tree_ID']);
+    $TreeBase64 = $imageData['TreeBase64']; 
+
+
+    // Generate a unique filename with a .png extension
+    $filename = uniqid() . '.png'; 
+
+    // Directory where images will be stored
+    $uploadDir = 'tree_images/';
+
+    // Create the upload directory if it doesn't exist
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    // Path to the stored image file
+    $filePath = $uploadDir . $filename;
+    $img = str_replace('data:image/png;base64,', '',$TreeBase64);
+    $img = str_replace(' ', '+', $img);
+    $data = base64_decode($img);
+    echo($TreeBase64);
+   
+
+    // Write the image data to the file
+    $success = file_put_contents($filePath, $data);
+
+    if ($success !== false) {
+        // Insert the image information into the database
+        $query = "INSERT INTO tree_image (Tree_ID, User_ID, ImagePath) VALUES ('$Tree_ID', '$AddedByUser_ID', '$filePath')";
+        $result = mysqli_query($con, $query);
+
+        if ($result) {
+            // Image data stored successfully
+            $data = [
+                'status' => 201,
+                'message' => "Image data stored successfully",
+            ];
+            header("HTTP/1.0 201 Image data stored successfully");
+            return json_encode($data);
+        } else {
+            // Failed to store image data in database
+            $data = [
+                'status' => 500,
+                'message' => "Failed to store image data in database",
+            ];
+            header("HTTP/1.0 500 Failed to store image data in database");
+            return json_encode($data);
+        }
+    } else {
+        // Failed to save image on server
+        $data = [
+            'status' => 500,
+            'message' => "Failed to save image on server",
+        ];
+        header("HTTP/1.0 500 Failed to save image on server");
+        return json_encode($data);
+    }
+}
+
+
+
+    
+
+
+
 
 ?>
