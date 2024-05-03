@@ -85,11 +85,11 @@ function storeTree($treeData){
     $Height = mysqli_real_escape_string($con,$treeData['Height']);
     $Circumference = mysqli_real_escape_string($con,$treeData['Circumference']);
     $Plant_Age = mysqli_real_escape_string($con,$treeData['Plant_Age']);
-    $Planter_Name = mysqli_real_escape_string($con,$treeData['Planter_Name']);
+    $Comment = mysqli_real_escape_string($con,$treeData['Comment']);
             
 
     if(empty(trim($Latitude)) ||empty(trim($Longitude))||empty(trim($AddedByUser_ID))||empty(trim($Height))||empty(trim($Circumference))
-    ||empty(trim($Plant_Age))||empty(trim($Planter_Name))){
+    ||empty(trim($Plant_Age))||empty(trim($Comment))){
 
 
             return error('Check Data');
@@ -110,16 +110,22 @@ function storeTree($treeData){
             $AddedByUser_ID = (int)$AddedByUser_ID;
 
             $query = "INSERT INTO tree_details (Longitude,Latitude,Height,Circumference,AddedByUser_ID,Plant_Age,
-            Planter_Name) VALUES ('$Longitude', '$Latitude','$Height','$Circumference','$AddedByUser_ID',
-            '$Plant_Age','$Planter_Name')";
+            Comment) VALUES ('$Longitude', '$Latitude','$Height','$Circumference','$AddedByUser_ID',
+            '$Plant_Age','$Comment')";
             $result = mysqli_query($con,$query);
     
             if($result){
-    
+
+                $checkQuery = "SELECT * FROM tree_details WHERE Longitude = '$Longitude' AND Latitude = 
+                '$Latitude'";
+                $checkResult = mysqli_query($con, $checkQuery);
+                $finalResult = mysqli_fetch_assoc($checkResult);
+                
                 $data = [
         
                     'status' => 201,
                     'message' => "Data stored successfully",
+                    'data'=>$finalResult
             
                 ];
             
@@ -316,6 +322,7 @@ function storeTreeImage($imageData) {
     if ($success !== false) {
         $query = "INSERT INTO tree_image (Tree_ID, User_ID, ImagePath) VALUES ('$Tree_ID', '$AddedByUser_ID', '$filePath')";
         $result = mysqli_query($con, $query);
+
 
         if ($result) {
             $data = [

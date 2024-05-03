@@ -9,12 +9,9 @@ include("userfunctions.php");
 $_requestMethod = $_SERVER["REQUEST_METHOD"];
 
 if ($_requestMethod == "POST") {
-    // Get the JSON data from the request body
     $inputData = json_decode(file_get_contents("php://input"), true);
 
-    // Check if JSON decoding was successful
     if ($inputData === null) {
-        // JSON decoding failed
         $data = [
             'status' => 400,
             'message' => 'Invalid JSON data'
