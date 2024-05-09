@@ -76,86 +76,38 @@ function error($message){
 }
 
 function storeTree($treeData){
-
     global $con;
 
-    $AddedByUser_ID = mysqli_real_escape_string($con,$treeData['AddedByUser_ID']);
-    $Longitude = mysqli_real_escape_string($con,$treeData['Longitude']);
-    $Latitude = mysqli_real_escape_string($con,$treeData['Latitude']);
-    $Height = mysqli_real_escape_string($con,$treeData['Height']);
-    $Circumference = mysqli_real_escape_string($con,$treeData['Circumference']);
-    $Plant_Age = mysqli_real_escape_string($con,$treeData['Plant_Age']);
-    $Comment = mysqli_real_escape_string($con,$treeData['Comment']);
-            
-
-    if(empty(trim($Latitude)) ||empty(trim($Longitude))||empty(trim($AddedByUser_ID))||empty(trim($Height))||empty(trim($Circumference))
-    ||empty(trim($Plant_Age))||empty(trim($Comment))){
-
-
-            return error('Check Data');
-
-    }else{
-
-
-        if (!is_numeric($Latitude) || !is_numeric($Longitude)|| !is_numeric($Longitude)|| !is_numeric($Height)|| !is_numeric($Circumference)) {
-
-            return error('Wrong data type');
-        }else{
-
-
-            $Latitude = (double)$Latitude;
-            $Longitude = (double)$Longitude;
-            $Height = (double)$Height;
-            $Circumference = (double)$Circumference;
-            $AddedByUser_ID = (int)$AddedByUser_ID;
-
-            $query = "INSERT INTO tree_details (Longitude,Latitude,Height,Circumference,AddedByUser_ID,Plant_Age,
-            Comment) VALUES ('$Longitude', '$Latitude','$Height','$Circumference','$AddedByUser_ID',
-            '$Plant_Age','$Comment')";
-            $result = mysqli_query($con,$query);
+    $AddedByUser_ID = mysqli_real_escape_string($con, $treeData['AddedByUser_ID']);
+    $Longitude = mysqli_real_escape_string($con, $treeData['Longitude']);
+    $Latitude = mysqli_real_escape_string($con, $treeData['Latitude']);
+    $Height = mysqli_real_escape_string($con, $treeData['Height']);
+    $Circumference = mysqli_real_escape_string($con, $treeData['Circumference']);
+    $Plant_Age = mysqli_real_escape_string($con, $treeData['Plant_Age']);
+    $Comment = mysqli_real_escape_string($con, $treeData['Comment']);
     
-            if($result){
-
-                $checkQuery = "SELECT * FROM tree_details WHERE Longitude = '$Longitude' AND Latitude = 
-                '$Latitude'";
-                $checkResult = mysqli_query($con, $checkQuery);
-                $finalResult = mysqli_fetch_assoc($checkResult);
-                
-                $data = [
-        
-                    'status' => 201,
-                    'message' => "Data stored successfully",
-                    'data'=>$finalResult
-            
-                ];
-            
-                header("HTTP/1.0 201 Data stored successfully");
-                return json_encode($data);
-                
-    
-            }else{
-    
-                $data = [
-        
-                    'status' => 500,
-                    'message' => "Internal API Error",
-            
-                ];
-            
-                header("HTTP/1.0 500 Internal API Error");
-                return json_encode($data);
-            }
-
-        }
-    
-        
-       
+    // Validate required and correct types
+    if (empty(trim($Latitude)) || empty(trim($Longitude)) || empty(trim($AddedByUser_ID)) ||
+        empty(trim($Height)) || empty(trim($Circumference)) || empty(trim($Plant_Age)) || empty(trim($Comment)) ||
+        !is_numeric($Latitude) || !is_numeric($Longitude) || !is_numeric($Height) || !is_numeric($Circumference)) {
+        return json_encode(['status' => 400, 'message' => 'Check data or wrong data type']);
     }
 
-
+    // Prepare the insertion query
+    $stmt = $con->prepare("INSERT INTO tree_details (Longitude, Latitude, Height, Circumference, AddedByUser_ID, Plant_Age, Comment) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("dddddss", $Longitude, $Latitude, $Height, $Circumference, $AddedByUser_ID, $Plant_Age, $Comment);
     
-
+    if ($stmt->execute()) {
+        // Get the last inserted ID
+        $tree_id = $con->insert_id;
+        header("HTTP/1.0 201 Data stored successfully");
+        return json_encode(['status' => 201, 'message' => 'Data stored successfully', 'Tree_ID' => $tree_id]);
+    } else {
+        header("HTTP/1.0 500 Internal API Error");
+        return json_encode(['status' => 500, 'message' => 'Internal API Error']);
+    }
 }
+
 
 
 function getTree($GET){
@@ -294,12 +246,64 @@ function updateTree($treeData,$GET){
 
 }
 
+function getImage($requestData) {
+    global $con;
+
+    $id = mysqli_real_escape_string($con, $requestData['id']);
+    // Query to select all relevant images and their details
+    $query = "SELECT Tree_ID, User_ID, Picture_ID, ImagePath FROM tree_image WHERE Tree_ID = '$id'";
+    $result = mysqli_query($con, $query);
+
+    if (mysqli_num_rows($result) > 0) {
+        $images = [];  // Initialize an array to hold all image data
+
+        while ($row = mysqli_fetch_assoc($result)) {
+            $filePath = $row['ImagePath'];
+
+            if (file_exists($filePath)) {
+                $type = pathinfo($filePath, PATHINFO_EXTENSION);
+                $data = file_get_contents($filePath);
+                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+                // Append each image's details to the images array
+                $images[] = [
+                    'Tree_ID' => $row['Tree_ID'], // Include Tree_ID
+                    'User_ID' => $row['User_ID'], // Include User_ID
+                    'Picture_ID' => $row['Picture_ID'], // Include Picture_ID
+                    'image' => $base64
+                ];
+            }
+        }
+
+        if (!empty($images)) {
+            $response = [
+                'status' => 200,
+                'images' => $images
+            ];
+        } else {
+            $response = [
+                'status' => 404,
+                'message' => 'Image files not found on server'
+            ];
+        }
+    } else {
+        $response = [
+            'status' => 404,
+            'message' => 'No images found with the given ID'
+        ];
+    }
+
+    return json_encode($response);
+}
+
+
+
 function storeTreeImage($imageData) {
     global $con;
 
     $AddedByUser_ID = mysqli_real_escape_string($con, $imageData['AddedByUser_ID']);
     $Tree_ID = mysqli_real_escape_string($con, $imageData['Tree_ID']);
-    $TreeBase64 = $imageData['TreeBase64']; 
+    $TreeBase64 = $imageData['Base64']; 
 
 
     $filename = uniqid() . '.png'; 

@@ -16,7 +16,7 @@ if($_requestMethod == "POST"){
     }else{
         $StoreTree = storeTreeImage($inputData);
     }
-    echo $inputData;
+    echo $StoreTree;
 }else{
     $data = [
         'status' => 405,
